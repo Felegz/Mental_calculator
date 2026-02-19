@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MindCalc — Калькулятор Разума</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0d0d;
+    --surface: #141414;
+    --border: #2a2a2a;
+    --accent: #e8d5a3;
+    --accent2: #a3c4e8;
+    --text: #f0ede8;
+    --muted: #666;
+    --green: #7ec89a;
+    --red: #e87c7c;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 20px;
+    background-image: 
+      radial-gradient(ellipse at 20% 20%, rgba(232, 213, 163, 0.04) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 80%, rgba(163, 196, 232, 0.04) 0%, transparent 50%);
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 48px;
+    animation: fadeDown 0.8s ease both;
+  }
+
+  header h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2.4rem, 6vw, 4rem);
+    font-weight: 900;
+    letter-spacing: -0.02em;
+    color: var(--accent);
+    line-height: 1;
+  }
+
+  header p {
+    margin-top: 10px;
+    color: var(--muted);
+    font-size: 0.78rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .calculator {
+    width: 100%;
+    max-width: 480px;
+    animation: fadeUp 0.8s 0.2s ease both;
+  }
+
+  /* ---- Display ---- */
+  .display {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px 16px 0 0;
+    padding: 20px 24px 16px;
+    min-height: 90px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    gap: 6px;
+  }
+
+  .display-expr {
+    font-size: 0.8rem;
+    color: var(--muted);
+    min-height: 1em;
+    letter-spacing: 0.05em;
+  }
+
+  .display-main {
+    font-family: 'DM Mono', monospace;
+    font-size: clamp(1.8rem, 5vw, 2.6rem);
+    font-weight: 500;
+    color: var(--text);
+    letter-spacing: -0.02em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* ---- Buttons ---- */
+  .buttons {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-top: none;
+    border-radius: 0 0 16px 16px;
+    overflow: hidden;
+  }
+
+  button {
+    background: var(--surface);
+    color: var(--text);
+    border: none;
+    padding: 0;
+    height: 70px;
+    font-family: 'DM Mono', monospace;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: background 0.1s, color 0.1s, transform 0.08s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  button:active { transform: scale(0.94); }
+
+  button:hover { background: #1e1e1e; }
+
+  button.op {
+    color: var(--accent2);
+  }
+
+  button.fn {
+    color: var(--accent);
+    font-size: 0.8rem;
+    letter-spacing: 0.04em;
+  }
+
+  button.equals {
+    background: var(--accent);
+    color: #0d0d0d;
+    font-size: 1.4rem;
+    font-weight: 700;
+  }
+
+  button.equals:hover { background: #f5e8c0; }
+
+  button.zero { grid-column: span 1; }
+
+  button.wide { grid-column: span 2; }
+
+  /* ripple */
+  .ripple {
+    position: absolute; border-radius: 50%;
+    background: rgba(255,255,255,0.06);
+    transform: scale(0); animation: ripple 0.4s linear;
+    pointer-events: none;
+  }
+  @keyframes ripple { to { transform: scale(4); opacity: 0; } }
+
+  /* ---- Hint Panel ---- */
+  .hint-panel {
+    width: 100%;
+    max-width: 480px;
+    margin-top: 20px;
+    animation: fadeUp 0.8s 0.4s ease both;
+  }
+
+  .hint-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 0;
+    overflow: hidden;
+    transition: all 0.3s ease;
+  }
+
+  .hint-header {
+    padding: 14px 20px;
+    background: rgba(232,213,163,0.06);
+    border-bottom: 1px solid var(--border);
+    font-size: 0.72rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .hint-header::before {
+    content: '◈';
+    font-size: 1rem;
+  }
+
+  .hint-steps {
+    padding: 18px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-height: 80px;
+  }
+
+  .hint-step {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    opacity: 0;
+    transform: translateY(8px);
+    animation: stepIn 0.4s ease forwards;
+  }
+
+  .hint-num {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: rgba(232,213,163,0.12);
+    border: 1px solid rgba(232,213,163,0.3);
+    color: var(--accent);
+    font-size: 0.7rem;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  .hint-text {
+    font-size: 0.88rem;
+    line-height: 1.55;
+    color: #d0ccc4;
+  }
+
+  .hint-text strong {
+    color: var(--accent);
+    font-weight: 500;
+  }
+
+  .hint-text em {
+    color: var(--accent2);
+    font-style: normal;
+  }
+
+  .empty-state {
+    padding: 28px 20px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.8rem;
+    letter-spacing: 0.06em;
+  }
+
+  /* answer reveal */
+  .answer-row {
+    padding: 14px 20px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    opacity: 0;
+    animation: stepIn 0.4s 0.6s ease forwards;
+  }
+
+  .answer-label {
+    font-size: 0.72rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .answer-value {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--green);
+  }
+
+  .show-answer-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 7px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    height: auto;
+  }
+
+  .show-answer-btn:hover {
+    background: var(--surface);
+    color: var(--text);
+    border-color: var(--muted);
+  }
+
+  /* trick tag */
+  .trick-tag {
+    display: inline-block;
+    font-size: 0.65rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: rgba(163,196,232,0.1);
+    border: 1px solid rgba(163,196,232,0.2);
+    color: var(--accent2);
+    margin-bottom: 6px;
+  }
+
+  @keyframes fadeDown {
+    from { opacity: 0; transform: translateY(-20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes stepIn {
+    to { opacity: 1; transform: translateY(0); }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>MindCalc</h1>
+  <p>Калькулятор разума · ментальная математика</p>
+</header>
+
+<div class="calculator">
+  <div class="display">
+    <div class="display-expr" id="expr"></div>
+    <div class="display-main" id="display">0</div>
+  </div>
+  <div class="buttons">
+    <!-- row 1 -->
+    <button class="fn" data-action="clear">AC</button>
+    <button class="fn" data-action="sign">+/−</button>
+    <button class="fn" data-action="percent">%</button>
+    <button class="op" data-op="/">÷</button>
+    <!-- row 2 -->
+    <button data-num="7">7</button>
+    <button data-num="8">8</button>
+    <button data-num="9">9</button>
+    <button class="op" data-op="*">×</button>
+    <!-- row 3 -->
+    <button data-num="4">4</button>
+    <button data-num="5">5</button>
+    <button data-num="6">6</button>
+    <button class="op" data-op="-">−</button>
+    <!-- row 4 -->
+    <button data-num="1">1</button>
+    <button data-num="2">2</button>
+    <button data-num="3">3</button>
+    <button class="op" data-op="+">+</button>
+    <!-- row 5 -->
+    <button data-num="0" class="wide">0</button>
+    <button data-action="dot">.</button>
+    <button class="equals" data-action="equals">=</button>
+  </div>
+</div>
+
+<div class="hint-panel">
+  <div class="hint-box" id="hintBox">
+    <div class="hint-header">Ментальный трюк</div>
+    <div class="empty-state" id="emptyState">Введите выражение и нажмите =</div>
+    <div class="hint-steps" id="hintSteps" style="display:none"></div>
+    <div class="answer-row" id="answerRow" style="display:none">
+      <span class="answer-label">Ответ</span>
+      <span class="answer-value" id="answerValue" style="display:none"></span>
+      <button class="show-answer-btn" id="showAnswerBtn">Показать ответ</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ---- Calc state ----
+let current = '0', stored = null, operator = null, waitNext = false, exprStr = '';
+
+const display = document.getElementById('display');
+const expr = document.getElementById('expr');
+
+function updateDisplay(val) {
+  display.textContent = val;
+}
+
+function handleNumber(n) {
+  if (waitNext) { current = n; waitNext = false; }
+  else current = current === '0' ? n : current + n;
+  updateDisplay(current);
+}
+
+function handleOp(op) {
+  if (operator && !waitNext) compute();
+  stored = parseFloat(current);
+  operator = op;
+  waitNext = true;
+  const sym = {'+':'+', '-':'−', '*':'×', '/':'÷'}[op];
+  exprStr = current + ' ' + sym;
+  expr.textContent = exprStr;
+}
+
+function compute() {
+  if (operator === null || stored === null) return null;
+  const a = stored, b = parseFloat(current);
+  let res;
+  if (operator === '+') res = a + b;
+  else if (operator === '-') res = a - b;
+  else if (operator === '*') res = a * b;
+  else if (operator === '/') res = b !== 0 ? a / b : 'Ошибка';
+  return { a, b, op: operator, res };
+}
+
+function handleEquals() {
+  const data = compute();
+  if (!data) return;
+  const { a, b, op, res } = data;
+  exprStr = a + ' ' + {'+':'+', '-':'−', '*':'×', '/':'÷'}[op] + ' ' + b + ' =';
+  expr.textContent = exprStr;
+  current = typeof res === 'number' ? String(parseFloat(res.toFixed(10))) : res;
+  updateDisplay(current);
+  stored = null; operator = null; waitNext = true;
+  showHints(a, b, op, res);
+}
+
+// ---- Button wiring ----
+document.querySelectorAll('button').forEach(btn => {
+  btn.addEventListener('click', function(e) {
+    rippleEffect(this, e);
+    if (this.dataset.num !== undefined) handleNumber(this.dataset.num);
+    else if (this.dataset.op) handleOp(this.dataset.op);
+    else if (this.dataset.action === 'equals') handleEquals();
+    else if (this.dataset.action === 'clear') {
+      current = '0'; stored = null; operator = null; waitNext = false; exprStr = '';
+      updateDisplay('0'); expr.textContent = '';
+      resetHints();
+    }
+    else if (this.dataset.action === 'sign') {
+      current = String(parseFloat(current) * -1); updateDisplay(current);
+    }
+    else if (this.dataset.action === 'percent') {
+      current = String(parseFloat(current) / 100); updateDisplay(current);
+    }
+    else if (this.dataset.action === 'dot') {
+      if (!current.includes('.')) { current += '.'; updateDisplay(current); }
+    }
+  });
+});
+
+function rippleEffect(btn, e) {
+  const r = document.createElement('span');
+  r.className = 'ripple';
+  const rect = btn.getBoundingClientRect();
+  const size = Math.max(rect.width, rect.height);
+  r.style.width = r.style.height = size + 'px';
+  r.style.left = (e.clientX - rect.left - size/2) + 'px';
+  r.style.top  = (e.clientY - rect.top  - size/2) + 'px';
+  btn.appendChild(r);
+  setTimeout(() => r.remove(), 500);
+}
+
+// ---- Hints engine ----
+function resetHints() {
+  document.getElementById('emptyState').style.display = 'block';
+  document.getElementById('hintSteps').style.display = 'none';
+  document.getElementById('answerRow').style.display = 'none';
+}
+
+function showHints(a, b, op, res) {
+  const steps = getHints(a, b, op, res);
+  const container = document.getElementById('hintSteps');
+  const answerRow  = document.getElementById('answerRow');
+  const answerVal  = document.getElementById('answerValue');
+  const showBtn    = document.getElementById('showAnswerBtn');
+
+  document.getElementById('emptyState').style.display = 'none';
+  container.style.display = 'flex';
+  container.innerHTML = '';
+
+  steps.forEach((step, i) => {
+    const div = document.createElement('div');
+    div.className = 'hint-step';
+    div.style.animationDelay = (i * 0.12) + 's';
+    div.innerHTML = `
+      <span class="hint-num">${i+1}</span>
+      <div class="hint-text">${step}</div>
+    `;
+    container.appendChild(div);
+  });
+
+  // Add trick tag at top
+  const tag = getTrickTag(a, b, op);
+  if (tag) {
+    const tagEl = document.createElement('div');
+    tagEl.className = 'trick-tag';
+    tagEl.textContent = tag;
+    tagEl.style.marginBottom = '4px';
+    container.prepend(tagEl);
+  }
+
+  answerRow.style.display = 'flex';
+  answerVal.style.display = 'none';
+  answerVal.textContent = typeof res === 'number' ? formatNum(res) : res;
+  showBtn.style.display = 'inline-block';
+  showBtn.onclick = () => {
+    answerVal.style.display = 'inline-block';
+    showBtn.style.display = 'none';
+  };
+}
+
+function formatNum(n) {
+  const s = parseFloat(n.toFixed(8));
+  return s.toLocaleString('ru');
+}
+
+function getTrickTag(a, b, op) {
+  if (op === '*') {
+    if (b === 11 || a === 11) return '× 11 трюк';
+    if (b === 9 || a === 9) return '× 9 трюк';
+    if (b === 5 || a === 5) return '× 5 трюк';
+    if (b === 25 || a === 25) return '× 25 трюк';
+    if (b === 99 || a === 99) return '× 99 трюк';
+    if (isSquare(a, b)) return 'Квадрат числа';
+    return 'Умножение';
+  }
+  if (op === '+') {
+    if (String(a).endsWith('9') || String(b).endsWith('9')) return 'Округление +1';
+    if (String(a).endsWith('8') || String(b).endsWith('8')) return 'Округление +2';
+    return 'Сложение';
+  }
+  if (op === '-') {
+    if (String(b).endsWith('9')) return 'Вычитание 9';
+    return 'Вычитание';
+  }
+  if (op === '/') return 'Деление';
+  return null;
+}
+
+function isSquare(a, b) { return a === b; }
+
+function getHints(a, b, op, res) {
+  if (op === '+') return hintsAdd(a, b, res);
+  if (op === '-') return hintsSub(a, b, res);
+  if (op === '*') return hintsMul(a, b, res);
+  if (op === '/') return hintsDiv(a, b, res);
+  return ['Нет подсказок для этой операции.'];
+}
+
+// ---- Addition hints ----
+function hintsAdd(a, b, res) {
+  const hints = [];
+  // Round up trick
+  const lastA = a % 10, lastB = b % 10;
+  if (lastA >= 7 || lastB >= 7) {
+    const which = lastA >= lastB ? a : b;
+    const other = which === a ? b : a;
+    const round = Math.ceil(which / 10) * 10;
+    const diff = round - which;
+    hints.push(`Округли <strong>${which}</strong> до <strong>${round}</strong> (прибавив ${diff})`);
+    hints.push(`Сложи: <strong>${round}</strong> + <strong>${other}</strong> = <em>${round + other}</em>`);
+    hints.push(`Вычти добавленное: <em>${round + other}</em> − <strong>${diff}</strong> = <em>${res}</em>`);
+  } else if (a % 100 !== 0 && b % 100 !== 0 && Math.floor(a/10) !== Math.floor(b/10)) {
+    // Split by tens
+    const aT = Math.floor(a/10)*10, aU = a%10;
+    const bT = Math.floor(b/10)*10, bU = b%10;
+    hints.push(`Разбей на части: <strong>${a}</strong> = ${aT}+${aU} и <strong>${b}</strong> = ${bT}+${bU}`);
+    hints.push(`Сложи десятки: <em>${aT} + ${bT} = ${aT+bT}</em>`);
+    hints.push(`Сложи единицы: <em>${aU} + ${bU} = ${aU+bU}</em>`);
+    hints.push(`Сумма: <em>${aT+bT} + ${aU+bU} = ${res}</em>`);
+  } else {
+    hints.push(`Иди слева направо: начни с больших разрядов`);
+    const aT = Math.floor(a/10)*10, bT = Math.floor(b/10)*10;
+    if (aT || bT) hints.push(`Сначала <strong>${aT || a}</strong> + <strong>${bT || b}</strong>, потом добавь остатки`);
+    hints.push(`Ответ: <em>${res}</em>`);
+  }
+  return hints;
+}
+
+// ---- Subtraction hints ----
+function hintsSub(a, b, res) {
+  const hints = [];
+  if (b % 10 === 9 || b % 10 === 8 || b % 10 === 7) {
+    const round = Math.ceil(b/10)*10;
+    const diff = round - b;
+    hints.push(`Округли вычитаемое <strong>${b}</strong> → <strong>${round}</strong>`);
+    hints.push(`Вычти: <strong>${a}</strong> − <strong>${round}</strong> = <em>${a - round}</em>`);
+    hints.push(`Добавь обратно <strong>${diff}</strong>: <em>${a - round} + ${diff} = ${res}</em>`);
+  } else if (b % 10 === 0) {
+    hints.push(`Вычитание кратного 10 — просто уменьши нужный разряд`);
+    hints.push(`<strong>${a}</strong> − <strong>${b}</strong> = <em>${res}</em>`);
+  } else {
+    // Count up
+    const toRound = Math.ceil(b/10)*10;
+    hints.push(`Метод «дополнения»: от <strong>${b}</strong> до <strong>${toRound}</strong> = ${toRound-b}`);
+    hints.push(`От <strong>${toRound}</strong> до <strong>${a}</strong> = ${a - toRound}`);
+    hints.push(`Итого: ${toRound-b} + ${a-toRound} = <em>${res}</em>`);
+  }
+  return hints;
+}
+
+// ---- Multiplication hints ----
+function hintsMul(a, b, res) {
+  const hints = [];
+  const [big, small] = a >= b ? [a, b] : [b, a];
+
+  if (small === 11) {
+    if (big < 100) {
+      const d1 = Math.floor(big/10), d2 = big%10;
+      hints.push(`Трюк ×11: напиши первую и последнюю цифру <strong>${big}</strong> по краям`);
+      hints.push(`Вставь их сумму в середину: ${d1} | <em>${d1+d2}</em> | ${d2}`);
+      if (d1+d2 >= 10) hints.push(`Сумма цифр ≥ 10, перенеси: <em>${res}</em>`);
+      else hints.push(`Результат: <em>${res}</em>`);
+    } else {
+      hints.push(`×11: сдвинь число и сложи с собой: <strong>${big}</strong>×10 + <strong>${big}</strong>`);
+      hints.push(`${big*10} + ${big} = <em>${res}</em>`);
+    }
+  } else if (small === 9) {
+    hints.push(`×9 = ×10 − ×1`);
+    hints.push(`<strong>${big}</strong> × 10 = <em>${big*10}</em>`);
+    hints.push(`<em>${big*10}</em> − <strong>${big}</strong> = <em>${res}</em>`);
+  } else if (small === 5) {
+    hints.push(`×5 = ÷2 × 10 (умножь на 10, потом раздели на 2)`);
+    hints.push(`<strong>${big}</strong> × 10 = <em>${big*10}</em>`);
+    hints.push(`<em>${big*10}</em> ÷ 2 = <em>${res}</em>`);
+  } else if (small === 25) {
+    hints.push(`×25 = ×100 ÷ 4`);
+    hints.push(`<strong>${big}</strong> × 100 = <em>${big*100}</em>`);
+    hints.push(`<em>${big*100}</em> ÷ 4 = <em>${res}</em>`);
+  } else if (small === 4) {
+    hints.push(`×4 = удвой дважды`);
+    hints.push(`<strong>${big}</strong> × 2 = <em>${big*2}</em>`);
+    hints.push(`<em>${big*2}</em> × 2 = <em>${res}</em>`);
+  } else if (small === 8) {
+    hints.push(`×8 = удвой трижды`);
+    hints.push(`<strong>${big}</strong>×2 = ${big*2}, ×2 = ${big*4}, ×2 = <em>${res}</em>`);
+  } else if (small === 99) {
+    hints.push(`×99 = ×100 − ×1`);
+    hints.push(`<strong>${big}</strong> × 100 = <em>${big*100}</em>`);
+    hints.push(`<em>${big*100}</em> − <strong>${big}</strong> = <em>${res}</em>`);
+  } else if (a === b) {
+    // Square
+    const n = a;
+    if (n % 5 === 0) {
+      hints.push(`Квадрат числа, кратного 5`);
+      hints.push(`(${n})² = <em>${res}</em>`);
+    } else {
+      const r = Math.round(n/10)*10;
+      const d = n - r;
+      hints.push(`Метод отклонения от круглого числа`);
+      hints.push(`Базa <strong>${r}</strong>, отклонение <strong>${d}</strong>`);
+      hints.push(`(${r}+${d})(${r}−${-d}) + ${d}² = ${r*r - d*d} + ${d*d} = <em>${res}</em>`);
+    }
+  } else if (small % 10 === 0) {
+    hints.push(`Умножение на кратное 10: просто приписывай нули`);
+    hints.push(`<strong>${big}</strong> × <strong>${small/10}</strong> = <em>${big * (small/10)}</em>, добавь 0`);
+    hints.push(`= <em>${res}</em>`);
+  } else {
+    // Generic: break apart
+    const sT = Math.floor(small/10)*10, sU = small%10;
+    if (sT > 0 && sU > 0) {
+      hints.push(`Разбей <strong>${small}</strong> = ${sT} + ${sU}`);
+      hints.push(`<strong>${big}</strong> × <strong>${sT}</strong> = <em>${big*sT}</em>`);
+      hints.push(`<strong>${big}</strong> × <strong>${sU}</strong> = <em>${big*sU}</em>`);
+      hints.push(`<em>${big*sT}</em> + <em>${big*sU}</em> = <em>${res}</em>`);
+    } else {
+      hints.push(`Используй разбиение на множители`);
+      hints.push(`<strong>${a}</strong> × <strong>${b}</strong> = <em>${res}</em>`);
+    }
+  }
+  return hints;
+}
+
+// ---- Division hints ----
+function hintsDiv(a, b, res) {
+  const hints = [];
+  if (b === 0) return ['На ноль делить нельзя!'];
+
+  if (b === 5) {
+    hints.push(`÷5 = ×2 ÷ 10`);
+    hints.push(`<strong>${a}</strong> × 2 = <em>${a*2}</em>`);
+    hints.push(`<em>${a*2}</em> ÷ 10 = <em>${res}</em>`);
+  } else if (b === 4) {
+    hints.push(`÷4 = ÷2 ÷2`);
+    hints.push(`<strong>${a}</strong> ÷ 2 = <em>${a/2}</em>`);
+    hints.push(`<em>${a/2}</em> ÷ 2 = <em>${res}</em>`);
+  } else if (b === 8) {
+    hints.push(`÷8 = ÷2 ÷2 ÷2`);
+    hints.push(`${a} ÷ 2 = ${a/2} → ÷2 = ${a/4} → ÷2 = <em>${res}</em>`);
+  } else if (b === 25) {
+    hints.push(`÷25 = ×4 ÷100`);
+    hints.push(`<strong>${a}</strong> × 4 = <em>${a*4}</em>`);
+    hints.push(`<em>${a*4}</em> ÷ 100 = <em>${res}</em>`);
+  } else if (b === 9) {
+    hints.push(`Проверь делимость на 9: сумма цифр должна делиться на 9`);
+    const digitSum = String(a).split('').reduce((s,c) => s + parseInt(c), 0);
+    hints.push(`Сумма цифр <strong>${a}</strong>: ${digitSum} ${digitSum % 9 === 0 ? '✓ делится' : '→ не делится нацело'}`);
+    hints.push(`<strong>${a}</strong> ÷ <strong>9</strong> = <em>${formatNum(res)}</em>`);
+  } else if (Number.isInteger(res)) {
+    hints.push(`Ищи, сколько раз <strong>${b}</strong> укладывается в <strong>${a}</strong>`);
+    hints.push(`<strong>${b}</strong> × ? = <strong>${a}</strong>`);
+    hints.push(`? = <em>${res}</em>`);
+  } else {
+    const int = Math.floor(a/b);
+    const rem = a - int*b;
+    hints.push(`Целая часть: <strong>${a}</strong> ÷ <strong>${b}</strong> ≈ <em>${int}</em>`);
+    if (rem) hints.push(`Остаток: <em>${rem}</em> → переводим в дробь: ${rem}/${b}`);
+    hints.push(`Полный ответ: <em>${formatNum(res)}</em>`);
+  }
+  return hints;
+}
+
+// keyboard support
+document.addEventListener('keydown', e => {
+  const map = {
+    '0':'0','1':'1','2':'2','3':'3','4':'4','5':'5','6':'6','7':'7','8':'8','9':'9',
+    '+':'+','-':'-','*':'*','/':'/','Enter':'=','.':'.',
+    'Delete':'c','Backspace':'c'
+  };
+  const k = map[e.key];
+  if (!k) return;
+  if ('0123456789'.includes(k)) handleNumber(k);
+  else if ('+-*/'.includes(k)) handleOp(k);
+  else if (k === '=') handleEquals();
+  else if (k === '.') { if (!current.includes('.')) { current += '.'; updateDisplay(current); } }
+  else if (k === 'c') {
+    current = '0'; stored = null; operator = null; waitNext = false; exprStr = '';
+    updateDisplay('0'); expr.textContent = ''; resetHints();
+  }
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MindCalc — Калькулятор Разума</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header>
+  <h1>MindCalc</h1>
+  <p>Калькулятор разума · ментальная математика</p>
+</header>
+
+<div class="calculator">
+  <div class="display">
+    <div class="display-expr" id="expr"></div>
+    <div class="display-main" id="display">0</div>
+  </div>
+  <div class="buttons">
+    <!-- row 1 -->
+    <button class="fn" data-action="clear">AC</button>
+    <button class="fn" data-action="sign">+/−</button>
+    <button class="fn" data-action="percent">%</button>
+    <button class="op" data-op="/">÷</button>
+    <!-- row 2 -->
+    <button data-num="7">7</button>
+    <button data-num="8">8</button>
+    <button data-num="9">9</button>
+    <button class="op" data-op="*">×</button>
+    <!-- row 3 -->
+    <button data-num="4">4</button>
+    <button data-num="5">5</button>
+    <button data-num="6">6</button>
+    <button class="op" data-op="-">−</button>
+    <!-- row 4 -->
+    <button data-num="1">1</button>
+    <button data-num="2">2</button>
+    <button data-num="3">3</button>
+    <button class="op" data-op="+">+</button>
+    <!-- row 5 -->
+    <button data-num="0" class="wide">0</button>
+    <button data-action="dot">.</button>
+    <button class="equals" data-action="equals">=</button>
+  </div>
+</div>
+
+<div class="hint-panel">
+  <div class="hint-box" id="hintBox">
+    <div class="hint-header">Ментальный трюк</div>
+    <div class="empty-state" id="emptyState">Введите выражение и нажмите =</div>
+    <div class="hint-steps" id="hintSteps" style="display:none"></div>
+    <div class="answer-row" id="answerRow" style="display:none">
+      <span class="answer-label">Ответ</span>
+      <span class="answer-value" id="answerValue" style="display:none"></span>
+      <button class="show-answer-btn" id="showAnswerBtn">Показать ответ</button>
+    </div>
+  </div>
+</div>
+
+<script src="hints.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
