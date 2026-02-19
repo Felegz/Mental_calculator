@@ -102,14 +102,41 @@ function showHints(a, b, op, res) {
   container.innerHTML = '';
 
   steps.forEach((step, i) => {
-    const div = document.createElement('div');
-    div.className = 'hint-step';
-    div.style.animationDelay = (i * 0.12) + 's';
-    div.innerHTML = `
-      <span class="hint-num">${i+1}</span>
-      <div class="hint-text">${step}</div>
-    `;
-    container.appendChild(div);
+    if (step && typeof step === 'object' && step.sub) {
+      // Sub-hint: collapsible <details> block
+      const details = document.createElement('details');
+      details.className = 'sub-hint-block';
+      details.style.animationDelay = (i * 0.12) + 's';
+      const summary = document.createElement('summary');
+      summary.className = 'sub-hint-summary';
+      summary.textContent = step.label;
+      details.appendChild(summary);
+      const inner = document.createElement('div');
+      inner.className = 'sub-hint-inner';
+      step.steps.forEach((subStep, j) => {
+        const div = document.createElement('div');
+        div.className = 'hint-step';
+        div.style.animation = 'none'; // no delay inside details
+        div.style.opacity = '1';
+        div.style.transform = 'none';
+        div.innerHTML = `
+          <span class="hint-num">${String.fromCharCode(97 + j)}</span>
+          <div class="hint-text">${subStep}</div>
+        `;
+        inner.appendChild(div);
+      });
+      details.appendChild(inner);
+      container.appendChild(details);
+    } else {
+      const div = document.createElement('div');
+      div.className = 'hint-step';
+      div.style.animationDelay = (i * 0.12) + 's';
+      div.innerHTML = `
+        <span class="hint-num">${i+1}</span>
+        <div class="hint-text">${step}</div>
+      `;
+      container.appendChild(div);
+    }
   });
 
   // Add trick tag at top
