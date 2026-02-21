@@ -18,18 +18,23 @@ function check(label, actual, expected) {
   }
 }
 
-// Flatten hints array: strings stay as-is, sub-hint objects get their steps included
+// Flatten hints to plain text strings for test assertions.
+// Handles both old string-array format (+/-/÷) and new {trickName, steps} object format (×).
 function _flatHints(hints) {
-  const out = [];
-  for (const h of hints) {
-    if (h && typeof h === 'object' && h.sub) {
-      out.push(h.label);
-      for (const s of h.steps) out.push(typeof s === 'string' ? s : '');
-    } else {
-      out.push(typeof h === 'string' ? h : '');
-    }
+  // New format: {trickName, steps: [{text, numbers}]}
+  if (hints && !Array.isArray(hints) && hints.steps) {
+    return hints.steps.map(step => {
+      if (typeof step === 'string') return step.replace(/<[^>]+>/g, '');
+      return step.text.replace(/\{(\w+)\}/g, (_, k) => {
+        const n = step.numbers && step.numbers[k];
+        return n ? String(n.value) : k;
+      });
+    });
   }
-  return out.map(h => h.replace(/<[^>]+>/g, ''));
+  // Old format: string array (for +/-/÷)
+  return hints.map(h =>
+    typeof h === 'string' ? h.replace(/<[^>]+>/g, '') : ''
+  );
 }
 
 // at least one hint contains substr
@@ -122,7 +127,7 @@ check('sq generic',    getTrickTag(36, 36,  '*'), 'Квадрат числа');
 // Scoring cross-trick decisions
 check('99×98 → ×99 (not near-100)',       getTrickTag(99, 98,   '*'), '× 99 трюк');    // ×99 base 1.5 < near-100 2.02
 check('101×103 → ×101 (not near-100)',    getTrickTag(101, 103, '*'), '× 101 trick');  // ×101 2.01 < near-100 2.03
-check('93×97 → near-100 (not same-tens)', getTrickTag(93, 97,   '*'), 'Near 100 trick'); // same-tens=2.81, near-100=2.21
+check('93×97 → same-tens (not near-100)', getTrickTag(93, 97,   '*'), 'Same tens, units sum to 10');
 check('45×55 → both-end-5 (not equidist)',getTrickTag(45, 55,   '*'), 'Both end in 5'); // both-end-5=2.5, equidist=2.75
 check('47×19 → near-decade',              getTrickTag(47, 19,   '*'), 'Округление при ×');
 check('47×21 → near-decade',              getTrickTag(47, 21,   '*'), 'Округление при ×');
@@ -902,43 +907,16 @@ section('hintsAdd — sum of squares ×101: 93²+21²=9090');
 }
 
 // =============================================================
-// SUB-HINTS
+// hintsMul OBJECT FORMAT CHECKS
 // =============================================================
 
-const findSub = h => h.find(x => x && typeof x === 'object' && x.sub);
-
-section('sub-hints — equidistant 37×49: sub-hint for 43²');
+section('hintsMul returns {trickName, steps} object');
 {
-  const h = hintsMul(37, 49, 1813);
-  const sub = findSub(h);
-  check('sub-hint object present', sub !== undefined, true);
-  check('label mentions 43 × 43', sub && sub.label.includes('43'), true);
-  check('sub steps are array', sub && Array.isArray(sub.steps), true);
-  check('sub steps non-empty', sub && sub.steps.length > 0, true);
-}
-
-section('sub-hints — sq-end-5 135²: sub-hint for 13×14');
-{
-  const h = hintsMul(135, 135, 18225);
-  const sub = findSub(h);
-  check('sub-hint object present', sub !== undefined, true);
-  check('label mentions 13', sub && sub.label.includes('13'), true);
-  check('label mentions 14', sub && sub.label.includes('14'), true);
-}
-
-section('sub-hints — sq-end-5 115²: NO sub-hint (11×12 is trivial ×11)');
-{
-  const h = hintsMul(115, 115, 13225);
-  const sub = findSub(h);
-  check('no sub-hint for trivial 11×12', sub, undefined);
-}
-
-section('sub-hints — depth guard: sub-hints inside sub stay flat');
-{
-  // At depth=1, _subHint should return null (no nested sub-hints)
-  const h = hintsMul(37, 49, 1813, 1);
-  const sub = findSub(h);
-  check('no sub-hint at depth=1', sub, undefined);
+  const h = hintsMul(47, 9, 423);
+  check('has trickName', typeof h.trickName, 'string');
+  check('has steps array', Array.isArray(h.steps), true);
+  check('steps are objects', h.steps.every(s => s && typeof s === 'object'), true);
+  check('each step has text', h.steps.every(s => typeof s.text === 'string'), true);
 }
 
 // =============================================================

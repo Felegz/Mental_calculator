@@ -121,6 +121,11 @@ button {
   transition: background 0.1s, color 0.1s, transform 0.08s;
   position: relative;
   overflow: hidden;
+  /* mobile touch improvements */
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 button:active { 
@@ -360,11 +365,11 @@ button.wide {
 
 /* trick tag */
 /* Hint highlight spans */
-.hc-input  { color: var(--hc-input);  font-weight: 600; }
-.hc-key    { color: var(--hc-key);    font-weight: 600; }
-.hc-calc   { color: var(--hc-calc);   font-weight: 600; }
-.hc-part   { color: var(--hc-part);   font-weight: 600; }
-.hc-answer { color: var(--hc-answer); font-weight: 700; }
+.hc-input  { color: #e8d5a3; font-weight: 500; }  /* исходные — тёплый */
+.hc-calc   { color: #a3c4e8; font-weight: 500; }  /* промежуточные — холодный */
+.hc-answer { color: #7ec89a; font-weight: 600; }  /* ответ — зелёный */
+.hc-key    { color: var(--hc-key);    font-weight: 500; }
+.hc-part   { color: var(--hc-part);   font-weight: 500; }
 
 .trick-tag {
   display: inline-block;
@@ -377,6 +382,169 @@ button.wide {
   border: 1px solid rgba(163,196,232,0.2);
   color: var(--accent2);
   margin-bottom: 6px;
+}
+
+/* Disable hover glow on touch devices (prevents sticky hover after tap) */
+@media (hover: none) {
+  button:hover { background: var(--surface); }
+  button.equals:hover { background: var(--accent); }
+}
+
+/* ---- Dev tools row ---- */
+.dev-tools {
+  width: 100%;
+  max-width: 480px;
+  margin-top: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.debug-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  user-select: none;
+}
+
+.debug-toggle input[type=checkbox] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  background: var(--surface);
+  cursor: pointer;
+  position: relative;
+  flex-shrink: 0;
+  transition: border-color 0.15s;
+}
+
+.debug-toggle input[type=checkbox]:checked {
+  background: rgba(163,196,232,0.2);
+  border-color: var(--accent2);
+}
+
+.debug-toggle input[type=checkbox]:checked::after {
+  content: '';
+  position: absolute;
+  left: 4px;
+  top: 1px;
+  width: 5px;
+  height: 9px;
+  border: 2px solid var(--accent2);
+  border-left: none;
+  border-top: none;
+  transform: rotate(45deg);
+}
+
+.rand-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font-family: 'DM Mono', monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 7px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  height: auto;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.rand-btn:hover {
+  background: var(--surface);
+  color: var(--text);
+  border-color: var(--muted);
+}
+
+/* ---- Debug panel ---- */
+.debug-panel {
+  width: 100%;
+  max-width: 480px;
+  margin-top: 10px;
+  animation: fadeUp 0.3s ease both;
+}
+
+.debug-pre {
+  background: #0a0a0a;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 16px;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.72rem;
+  line-height: 1.6;
+  color: #888;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+/* ---- Random log panel ---- */
+.randlog-panel {
+  width: 100%;
+  max-width: 480px;
+  margin-top: 10px;
+  animation: fadeUp 0.3s ease both;
+}
+
+.randlog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.randlog-copy {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font-family: 'DM Mono', monospace;
+  font-size: 0.65rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s;
+  height: auto;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.randlog-copy:hover {
+  background: var(--surface);
+  color: var(--text);
+  border-color: var(--muted);
+}
+
+.randlog-area {
+  width: 100%;
+  height: 320px;
+  background: #0a0a0a;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 16px;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.7rem;
+  line-height: 1.6;
+  color: #999;
+  resize: vertical;
+  outline: none;
+  box-sizing: border-box;
 }
 
 @keyframes fadeDown {

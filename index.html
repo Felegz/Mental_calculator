@@ -60,6 +60,26 @@
   </div>
 </div>
 
+<div class="dev-tools">
+  <label class="debug-toggle">
+    <input type="checkbox" id="debugCheck">
+    <span>Показать логику</span>
+  </label>
+  <button class="rand-btn" id="randBtn">&#9684; Случайный тест</button>
+</div>
+
+<div class="debug-panel" id="debugPanel" style="display:none">
+  <pre class="debug-pre" id="debugPre"></pre>
+</div>
+
+<div class="randlog-panel" id="randlogPanel" style="display:none">
+  <div class="randlog-header">
+    <span>Лог случайных тестов</span>
+    <button class="randlog-copy" id="randlogCopy">Копировать</button>
+  </div>
+  <textarea class="randlog-area" id="randlogArea" readonly></textarea>
+</div>
+
 <script src="hints.js"></script>
 <script src="app.js"></script>
 </body>
